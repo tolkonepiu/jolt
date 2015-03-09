@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Jolt by bazaarvoice</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Jolt</h1>
+        <p>JSON to JSON transformation library written in Java.</p>
+        <p class="view"><a href="https://github.com/bazaarvoice/jolt">View the Project on GitHub <small>bazaarvoice/jolt</small></a></p>
+        <ul>
+          <li><a href="https://github.com/bazaarvoice/jolt/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/bazaarvoice/jolt/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/bazaarvoice/jolt">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="jolt" class="anchor" href="#jolt" aria-hidden="true"><span class="octicon octicon-link"></span></a>Jolt</h1>
+
+<p>JSON to JSON transformation library written in Java where the "specification" for the transform is itself a JSON document.</p>
+
+<h3>
+<a id="useful-for" class="anchor" href="#useful-for" aria-hidden="true"><span class="octicon octicon-link"></span></a>Useful For</h3>
+
+<ol>
+<li>Transforming JSON data from ElasticSearch, MongoDb, Cassandra, etc before sending it off to the world</li>
+<li>Extracting data from a large JSON documents for your own consumption</li>
+</ol>
+
+<h2>
+<a id="table-of-contents" class="anchor" href="#table-of-contents" aria-hidden="true"><span class="octicon octicon-link"></span></a>Table of Contents</h2>
+
+<ul>
+<li><a href="#Overview">1 Overview</a></li>
+<li><a href="#Documentation">2 Documentation</a></li>
+<li><a href="#Shiftr_Transform_DSL">3 Shiftr Transform DSL</a></li>
+<li><a href="#Demo">4 Demo</a></li>
+<li><a href="#Getting_Started">5 Getting Started</a></li>
+<li><a href="#Getting_Transform_Help">6 Getting Transform Help</a></li>
+<li><a href="#Alternatives">7 Alternatives</a></li>
+<li><a href="#Performance">8 Performance</a></li>
+<li><a href="#CLI">9 CLI</a></li>
+<li><a href="#Code_Coverage">10 Code Coverage</a></li>
+<li><a href="#Release_Notes">11 Release Notes</a></li>
+</ul>
+
+<h2>
+<a id="-overview" class="anchor" href="#-overview" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Overview"></a> Overview</h2>
+
+<p>Jolt :</p>
+
+<ul>
+<li>provides a set of transforms, that can be "chained" together to form the overall JSON to JSON transform.</li>
+<li>focuses on transforming the <em>structure</em> of your JSON data, not manipulating specific values
+
+<ul>
+<li>The idea being: use Jolt to get most of the structure right, then write code to fix values</li>
+</ul>
+</li>
+<li>consumes and produces "hydrated" JSON : in-memory tree of Maps, Lists, Strings, etc.
+
+<ul>
+<li>use Jackson (or whatever) to serialize and deserialize the JSON text</li>
+</ul>
+</li>
+</ul>
+
+<h3>
+<a id="stock-transforms" class="anchor" href="#stock-transforms" aria-hidden="true"><span class="octicon octicon-link"></span></a>Stock Transforms</h3>
+
+<p>The Stock transforms are:</p>
+
+<pre><code>shift       : copy data from the input tree and put it the output tree
+default     : apply default values to the tree
+remove      : remove data from the tree
+sort        : sort the Map key values alphabetically ( for debugging and human readability )
+cardinality : "fix" the cardinality of input data.  Eg, the "urls" element is usually a List, but if there is only one, then it is a String
+</code></pre>
+
+<p>Each transform has it's own DSL (Domain Specific Language) in order to facilitate it's narrow job.</p>
+
+<p>Currently, all the Stock transforms just effect the "structure" of the data.
+To do data manipulation, you will need to write Java code.   If you write your Java "data manipulation" code to implement the Transform interface, then you can insert your code in the transform chain.</p>
+
+<p>The out-of-the-box Jolt transforms should be able to do most of your structural transformation, with custom Java Transforms implementing your data manipulation.</p>
+
+<h2>
+<a id="-documentation" class="anchor" href="#-documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Documentation"></a> Documentation</h2>
+
+<p>Jolt <a href="https://docs.google.com/presentation/d/1sAiuiFC4Lzz4-064sg1p8EQt2ev0o442MfEbvrpD1ls/edit?usp=sharing">Slide Deck</a> : covers motivation, development, and transforms.</p>
+
+<p>Javadoc explaining each transform DSL :</p>
+
+<ul>
+<li><a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Shiftr.java">shift</a></li>
+<li><a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Defaultr.java">default</a></li>
+<li><a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Removr.java">remove</a></li>
+<li><a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Sortr.java">sort</a></li>
+<li>full qualified Java ClassName : Class implements the Transform or ContextualTransform interfaces, and can optionally be SpecDriven (marker interface)
+
+<ul>
+<li>
+<a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Transform.java">Transform</a> interface</li>
+<li>
+<a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/SpecDriven.java">SpecDriven</a>
+
+<ul>
+<li>where the "input" is "hydrated" Java version of your JSON Data</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<p>Running a Jolt transform means creating an instance of <a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Chainr.java">Chainr</a>  with a list of transforms.</p>
+
+<p>The JSON spec for Chainr looks like : <a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/test/resources/json/chainr/firstSample.json">unit test</a>.</p>
+
+<p>The Java side looks like :</p>
+
+<pre><code>Chainr chainr = JsonUtils.classpathToList( "/path/to/chainr/spec.json" );
+
+Object input = elasticSearchHit.getSource(); // ElasticSearch already returns hydrated JSon
+
+Object output = chainr.transform( input );
+
+return output;
+</code></pre>
+
+<h3>
+<a id="-shiftr-transform-dsl" class="anchor" href="#-shiftr-transform-dsl" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Shiftr_Transform_DSL"></a> Shiftr Transform DSL</h3>
+
+<p>The Shiftr transform generally does most of the "heavy lifting" in the transform chain.
+To see the Shiftr DSL in action, please look at our unit tests (<a href="https://github.com/bazaarvoice/jolt/tree/master/jolt-core/src/test/resources/json/shiftr">shiftr tests</a>) for nice bite sized transform examples, and read the extensive Shiftr <a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Shiftr.java">javadoc</a>.</p>
+
+<p>Our unit tests follow the pattern :</p>
+
+<pre><code>{
+    "input": {
+        // sample input
+    },
+
+    "spec": {
+        // transform spec
+    },
+
+    "expected": {
+        // what the output of the transform looks like
+    }
+}
+</code></pre>
+
+<p>We read in "input", apply the "spec", and <a href="https://github.com/bazaarvoice/jolt/blob/master/json-utils/src/main/java/com/bazaarvoice/jolt/Diffy.java">Diffy</a> it against the "expected".</p>
+
+<p>To learn the Shiftr DSL, examine "input" and "output" json, get an understanding of how data is moving, and <em>then</em> look at the transform spec to see how it facilitates the transform.</p>
+
+<p>For reference, <a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/test/resources/json/shiftr/firstSample.json">this</a> was the very first test we wrote.</p>
+
+<h2>
+<a id="-demo" class="anchor" href="#-demo" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Demo"></a> Demo</h2>
+
+<p>There is a demo available at <a href="http://jolt-demo.appspot.com/">jolt-demo.appspot.com</a>.
+You can paste in JSON input data and a Spec, and it will post the data to server and run the transform.</p>
+
+<p>Note</p>
+
+<ul>
+<li>it is hosted on a free Google App Engine instance, so it may take a minute to spin up.</li>
+<li>it validates in input JSON and spec client side, but if there are any errors server side it just silently fails.</li>
+</ul>
+
+<h2>
+<a id="-getting-started" class="anchor" href="#-getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Getting_Started"></a> Getting Started</h2>
+
+<p>Getting started code wise has it's <a href="gettingStarted.md">own doc</a>.</p>
+
+<h2>
+<a id="-getting-transform-help" class="anchor" href="#-getting-transform-help" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Getting_Transform_Help"></a> Getting Transform Help</h2>
+
+<p>If you can't get a transform working and you need help, create and Issue in Jolt (for now).</p>
+
+<p>Make sure you include what your "input" is, and what you want your "output" to be.</p>
+
+<h2>
+<a id="-alternatives" class="anchor" href="#-alternatives" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Alternatives"></a> Alternatives</h2>
+
+<p>Aside from writing your own custom code to do a transform, there are two general approaches to doing Json to Json transforms in Java.</p>
+
+<p>1) JSON -&gt; XML -&gt; XSLT or STX -&gt; XML -&gt; JSON</p>
+
+<p>Aside from being a Rube Goldberg approach, XSLT is more complicated than Jolt because it is trying to do the whole transform with a single DSL.</p>
+
+<p>2) Write a Template (Velocity, FreeMarker, etc) that take hydrated JSON input and write textual JSON output</p>
+
+<p>With this approach you are working from the output format backwards to the input, which is complex for any non-trivial transform.
+Eg, the structure of your template will be dictated by the output JSON format, and you will end up coding a parallel tree walk of the input data and the output format in your template.
+Jolt works forward from the input data to the output format which is simpler, and it does the parallel tree walk for you.</p>
+
+<h2>
+<a id="-performance" class="anchor" href="#-performance" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Performance"></a> Performance</h2>
+
+<p>The primary goal of Jolt was to improve "developer speed" by providing the ability to have a declarative rather than imperative transforms.
+That said, Jolt should have a better runtime than the alternatives listed above.</p>
+
+<p>Work has been done to make the stock Jolt transforms fast:</p>
+
+<ol>
+<li>Transforms can be initialized once with their spec, and re-used many times in a multi-threaded environment.
+
+<ul>
+<li>We reuse initialized Jolt transforms to service multiple web requests from a DropWizard service.</li>
+</ul>
+</li>
+<li>"*" wildcard logic was redone to reduce the use of Regex in the common case, which was a dramatic speed improvement.</li>
+<li>The parallel tree walk performed by Shiftr was optimized.</li>
+</ol>
+
+<p>Two things to be aware of :</p>
+
+<ol>
+<li>Jolt is not "stream" based, so if you have a very large Json document to transform you need to have enough memory to hold it.</li>
+<li>The transform process will create and discard a lot of objects, so the garbage collector will have work to do.</li>
+</ol>
+
+<h2>
+<a id="-jolt-cli" class="anchor" href="#-jolt-cli" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="CLI"></a> Jolt CLI</h2>
+
+<p>Jolt Transforms and tools can be run from the command line. Command line interface doc <a href="cli/README.md">here</a>.</p>
+
+<h2>
+<a id="-code-coverage" class="anchor" href="#-code-coverage" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Code_Coverage"></a> Code Coverage</h2>
+
+<p><a href="http://travis-ci.org/bazaarvoice/jolt"><img src="https://secure.travis-ci.org/bazaarvoice/jolt.png" alt="Build Status"></a></p>
+
+<p>For the moment we have Cobertura configured in our poms.
+When we move to a proper open source CI build, this can go away.</p>
+
+<pre><code>mvn cobertura:cobertura
+open jolt-core/target/site/cobertura/index.html
+</code></pre>
+
+<p>Currently code coverage is at 89% line, and 81% branch.</p>
+
+<h2>
+<a id="-release-notes" class="anchor" href="#-release-notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<a name="Release_Notes"></a> Release Notes</h2>
+
+<p><a href="https://github.com/bazaarvoice/jolt/releases">Versions and Release Notes available here</a>.</p>
+      </section>
+    </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/bazaarvoice">bazaarvoice</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
